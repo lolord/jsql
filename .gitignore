@@ -1,0 +1,8 @@
+/target
+/Cargo.lock
+.env
+/.vscode
+.github
+__pycache__
+/python/jsql/*.pyd
+.pytest_cache
