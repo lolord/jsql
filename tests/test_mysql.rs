@@ -1,13 +1,13 @@
 #[cfg(test)]
 mod test_mysql {
 
-    use serde_json::Value::{String, Number};
+    use serde_json::Value::{String, Number, Null, Array};
     #[macro_export(local_inner_macros)]
     macro_rules! mysql {
-        // Hide distracting implementation details from the generated rustdoc.
-        ($($json:tt)+) => {
-            jsql::dialects::mysql::mysql(jsql::query::decode::decode_express(serde_json::json!($($json)+)))
-        };
+        ($($json:tt)+) => {{
+            let expr = jsql::query::decode::decode_express(&serde_json::json!($($json)+));
+            jsql::dialects::mysql::mysql(expr.unwrap())
+        }}
     }
     #[test]
     fn test_eq_omit() {
@@ -16,13 +16,13 @@ mod test_mysql {
         assert_eq!(params, vec![String("apple".into())])
     }
 
+
     #[test]
     fn test_eq() {
         let (sql, params) = mysql!({"name":{"$eq": "apple"}});
         assert_eq!(sql, "`name` = ?");
         assert_eq!(params, vec![String("apple".into())])
     }
-
 
     #[test]
     fn test_ne() {
@@ -94,6 +94,35 @@ mod test_mysql {
 
     }
 
+    #[test]
+    fn test_null() {
+        let (sql, params) = mysql!({"name":{"$eq": null}});
+        assert_eq!(sql, "`name` = ?");
+        assert_eq!(params, vec![Null])
+    }
+
+    #[test]
+    fn test_in() {
+        let (sql, params) = mysql!({"name":{"$in": ["apple", "banana"]}});
+        assert_eq!(sql, "`name` in ?");
+        assert_eq!(params.len(), 1);
+        assert_eq!(params[0],Array(vec![String("apple".into()),String("banana".into())]));
+    }
+
+    #[test]
+    fn test_nin() {
+        let (sql, params) = mysql!({"name":{"$nin": ["apple", "banana"]}});
+        assert_eq!(sql, "`name` not in ?");
+        assert_eq!(params.len(), 1);
+        assert_eq!(params[0],Array(vec![String("apple".into()),String("banana".into())]));
+    }
+
+    #[test]
+    fn test_regex() {
+        let (sql, params) = mysql!({"name":{"$regex": "app?"}});
+        assert_eq!(sql, "`name` REGEXP ?");
+        assert_eq!(params,vec![String("app?".into())]);
+    }
 
     // #[test]
     // fn test_mysql() {

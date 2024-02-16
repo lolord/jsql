@@ -6,6 +6,9 @@ pub enum CompareOperator {
     NE,
     GT,
     LT,
+    IN,
+    NIN,
+    REGEX,
 }
 
 pub fn validate_compare_operator(s: &String) -> Option<CompareOperator> {
@@ -14,6 +17,9 @@ pub fn validate_compare_operator(s: &String) -> Option<CompareOperator> {
         "$ne" => Some(CompareOperator::NE),
         "$gt" => Some(CompareOperator::GT),
         "$lt" => Some(CompareOperator::LT),
+        "$in" => Some(CompareOperator::IN),
+        "$nin" => Some(CompareOperator::NIN),
+        "$regex" => Some(CompareOperator::REGEX),
         _ => None,
     }
 }
@@ -25,6 +31,9 @@ impl fmt::Display for CompareOperator {
             CompareOperator::NE => "$ne",
             CompareOperator::GT => "$gt",
             CompareOperator::LT => "$lt",
+            CompareOperator::IN => "$in",
+            CompareOperator::NIN => "$nin",
+            CompareOperator::REGEX => "$regex",
         };
 
         write!(f, "{}", op)
@@ -62,24 +71,3 @@ pub fn validate_logic_operator(s: &String) -> Option<LogicOperator> {
     }
 }
 
-impl CompareOperator {
-    pub fn as_symbol(&self) -> &str {
-        match self {
-            CompareOperator::EQ => "=",
-            CompareOperator::NE => "!=",
-            CompareOperator::GT => ">",
-            CompareOperator::LT => "<",
-        }
-    }
-}
-
-impl LogicOperator {
-    pub fn as_symbol(&self) -> &str {
-        match self {
-            LogicOperator::AND => "and",
-            LogicOperator::NOT => "not",
-            LogicOperator::OR => "or",
-            LogicOperator::NOR => "nor",
-        }
-    }
-}

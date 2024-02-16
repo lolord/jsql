@@ -1,13 +1,14 @@
 use serde_json::Value;
 
-
 use super::express::{logic_combine, Express, FieldExpress, JsonObject, Predicate, Predicates};
 
 use super::operators::{
     validate_compare_operator, validate_logic_operator, CompareOperator, LogicOperator,
 };
 
-fn decode_json_predicates(obj: JsonObject) -> Predicates {
+use super::error::*;
+
+fn decode_json_predicates(obj: &JsonObject) -> Predicates {
     let mut predicates: Predicates = Vec::with_capacity(obj.len());
     for (operator, value) in obj.iter() {
         if let Some(comp) = validate_compare_operator(operator) {
@@ -20,18 +21,20 @@ fn decode_json_predicates(obj: JsonObject) -> Predicates {
     predicates
 }
 
-fn decode_json_object(obj: JsonObject) -> Express {
+fn decode_json_object(obj: &JsonObject) -> Result<Express, ExpressError> {
     let mut results: Vec<Express> = Vec::with_capacity(obj.len());
     for (key, value) in obj.iter() {
+        if let Some(_) = validate_compare_operator(key) {
+            // {$op: xxx} must be predicates
+            return Err(ExpressError::ValueError);
+        }
+
         if let Some(op) = validate_logic_operator(key) {
             // login value must predicates array
             if let Value::Array(arr) = value {
-                let items = decode_json_array(arr.clone());
+                let items = decode_json_array(arr)?;
                 results.push(logic_combine(op, items));
             }
-        } else if let Some(_) = validate_compare_operator(key) {
-            // {$op: xxx} must be predicates
-            panic!()
         } else {
             // key is field
             match value {
@@ -41,43 +44,37 @@ fn decode_json_object(obj: JsonObject) -> Express {
                     // 3.value is doc
                     results.push(Express::Field(FieldExpress {
                         field: String::from(key),
-                        predicates: decode_json_predicates(obj.clone()),
+                        predicates: decode_json_predicates(obj),
                     }))
                 }
-                _ => {
-                    let mut predicates: Predicates = Vec::with_capacity(1);
-                    predicates.push(Predicate {
+                _ => results.push(Express::Field(FieldExpress {
+                    field: String::from(key),
+                    predicates: vec![Predicate {
                         op: CompareOperator::EQ,
                         value: value.clone(),
-                    });
-
-                    results.push(Express::Field(FieldExpress {
-                        field: String::from(key),
-                        predicates: predicates,
-                    }))
-                }
+                    }],
+                })),
             }
         }
     }
     if results.len() > 1 {
-        logic_combine(LogicOperator::AND, results)
+        Ok(logic_combine(LogicOperator::AND, results))
     } else {
-        results.pop().unwrap()
+        Ok(results.pop().unwrap())
     }
 }
-fn decode_json_array(arr: Vec<Value>) -> Vec<Express> {
-    let express: Vec<Express> = arr
-        .into_iter()
-        .map(decode_express)
-        .collect();
-
-    express
+fn decode_json_array(arr: &Vec<Value>) -> Result<Vec<Express>, ExpressError> {
+    let mut express: Vec<Express> = vec![];
+    for i in arr {
+        express.push(decode_express(i)?)
+    }
+    Ok(express)
 }
 
-pub fn decode_express(value: Value) -> Express {
+pub fn decode_express(value: &Value) -> Result<Express, ExpressError> {
     match value {
-        Value::Array(arr) => logic_combine(LogicOperator::AND, decode_json_array(arr)),
+        Value::Array(arr) => Ok(logic_combine(LogicOperator::AND, decode_json_array(arr)?)),
         Value::Object(o) => decode_json_object(o),
-        _ => panic!("value error"),
+        _ => Err(ExpressError::ValueError),
     }
 }
