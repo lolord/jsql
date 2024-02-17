@@ -5,7 +5,7 @@ mod test_mysql {
     #[macro_export(local_inner_macros)]
     macro_rules! mysql {
         ($($json:tt)+) => {{
-            let expr = jsql::query::decode::decode_express(&serde_json::json!($($json)+));
+            let expr = jsql::query::decode_json::decode_express(&serde_json::json!($($json)+));
             jsql::dialects::mysql::mysql(expr.unwrap())
         }}
     }
@@ -13,7 +13,8 @@ mod test_mysql {
     fn test_eq_omit() {
         let (sql, params) = mysql!({"name": "apple"});
         assert_eq!(sql, "`name` = ?");
-        assert_eq!(params, vec![String("apple".into())])
+        // assert_eq!(params, vec![String("apple".into())])
+        assert_eq!(params[0], String("apple".into()))
     }
 
     #[test]

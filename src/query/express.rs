@@ -1,37 +1,31 @@
-use serde::Serialize;
-use serde_json::{to_value, Map, Value};
-use std::{fmt, ops};
+use std::ops;
 
 pub use super::operators::{CompareOperator, LogicOperator};
 
 #[derive(Debug, Clone)]
-pub struct Predicate {
+pub struct Predicate<T> {
     pub op: CompareOperator,
-    pub value: Value,
+    pub value: Box<T>,
 }
 
-impl fmt::Display for Predicate {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Express::Field({}, {})", self.op, self.value)
-    }
-}
+// impl fmt::Display for Predicate {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "Express::Field({}, {})", self.op, self.value)
+//     }
+// }
 
 #[derive(Debug, Clone)]
-pub struct FieldExpress {
+pub struct FieldExpress<T> {
     pub field: String,
-    pub predicates: Vec<Predicate>,
+    pub predicates: Vec<Predicate<T>>,
 }
 
-impl FieldExpress {
-    pub fn new<T>(field: &dyn ToString, op: CompareOperator, val: T) -> Self
-    where
-        T: Serialize,
-    {
-        let mut predicates: Vec<Predicate> = Vec::new();
-        let value = to_value(val).unwrap();
+impl<T> FieldExpress<T> {
+    pub fn new(field: &dyn ToString, op: CompareOperator, value: T) -> Self {
+        let mut predicates: Vec<Predicate<T>> = Vec::new();
         predicates.push(Predicate {
             op: op,
-            value: value,
+            value: value.into(),
         });
 
         Self {
@@ -42,54 +36,65 @@ impl FieldExpress {
 }
 
 #[derive(Debug, Clone)]
-pub struct LogicExpress {
+pub struct LogicExpress<T> {
     pub op: LogicOperator,
-    pub express: Vec<Express>,
+    pub express: Vec<Express<T>>,
 }
 
-impl Default for LogicExpress {
+impl<T> Default for LogicExpress<T> {
     fn default() -> Self {
         Self {
             op: LogicOperator::AND,
-            express: Vec::<Express>::new(),
+            express: Vec::<Express<T>>::new(),
         }
     }
 }
 
 #[derive(Debug, Clone)]
-pub enum Express {
-    Field(FieldExpress),
-    Logic(LogicExpress),
+pub enum Express<T> {
+    Field(FieldExpress<T>),
+    Logic(LogicExpress<T>),
 }
 
-impl Default for Express {
+impl<T> Default for Express<T> {
     fn default() -> Self {
         Self::Logic(LogicExpress::default())
     }
 }
 
-pub type JsonObject = Map<String, Value>;
+pub type Predicates<T> = Vec<Predicate<T>>;
 
-pub type Predicates = Vec<Predicate>;
-
-pub fn default_combine(l: Express, r: Express) -> Express {
+pub fn default_combine<T>(l: Express<T>, r: Express<T>) -> Express<T> {
     Express::Logic(LogicExpress {
         op: LogicOperator::AND,
-        express: vec![l.clone(), r.clone()],
+        express: vec![l, r],
     })
 }
 
-pub fn logic_combine(operator: LogicOperator, items: Vec<Express>) -> Express {
-    let mut express: Vec<Express> = Vec::new();
+pub fn logic_combine<T>(operator: LogicOperator, items: Vec<Express<T>>) -> Express<T> {
+    let mut express: Vec<Express<T>> = Vec::new();
     for item in items {
-        if let Express::Logic(i) = item.clone() {
-            if i.op == operator {
-                express.extend(i.express);
-                continue;
+        match item {
+            Express::Field(i) => express.push(Express::Field(i)),
+            Express::Logic(i) => {
+                if i.op == operator {
+                    express.extend(i.express);
+                    continue;
+                }
+                express.push(Express::Logic(i))
             }
         }
+
         // TODO
-        express.push(item);
+
+        // if let Express::Logic(i) = item {
+        //     if i.op == operator {
+        //         express.extend(i.express);
+        //         continue;
+        //     }
+        // }
+        // // TODO
+        // express.push(item);
     }
     Express::Logic(LogicExpress {
         op: operator,
@@ -97,13 +102,13 @@ pub fn logic_combine(operator: LogicOperator, items: Vec<Express>) -> Express {
     })
 }
 
-impl ops::Add<Express> for Express {
-    fn add(self, _rhs: Express) -> Express {
+impl<T> ops::Add<Express<T>> for Express<T> {
+    fn add(self, _rhs: Express<T>) -> Express<T> {
         match self {
             Express::Field(left) => match _rhs {
                 Express::Field(right) => {
                     if left.field == right.field {
-                        let mut predicates: Predicates = Vec::new();
+                        let mut predicates: Predicates<T> = Vec::new();
                         predicates.extend(left.predicates);
                         predicates.extend(right.predicates);
                         Express::Field(FieldExpress {
@@ -116,7 +121,7 @@ impl ops::Add<Express> for Express {
                 }
                 Express::Logic(right) => match right.op {
                     LogicOperator::AND => {
-                        let mut express: Vec<Express> = Vec::new();
+                        let mut express: Vec<Express<T>> = Vec::new();
                         express.push(Express::Field(left));
                         express.extend(right.express);
                         Express::Logic(LogicExpress {
@@ -137,7 +142,7 @@ impl ops::Add<Express> for Express {
                     let triple: (LogicOperator, LogicOperator) = (left.op, right.op);
                     match triple {
                         (LogicOperator::AND, LogicOperator::AND) => {
-                            let mut express: Vec<Express> = Vec::new();
+                            let mut express: Vec<Express<T>> = Vec::new();
                             express.extend(left.express);
                             express.extend(right.express);
                             Express::Logic(LogicExpress {
@@ -158,7 +163,7 @@ impl ops::Add<Express> for Express {
                         (LogicOperator::OR, LogicOperator::AND) => todo!(),
                         (LogicOperator::OR, LogicOperator::NOT) => todo!(),
                         (LogicOperator::OR, LogicOperator::OR) => {
-                            let mut express: Vec<Express> = Vec::new();
+                            let mut express: Vec<Express<T>> = Vec::new();
                             express.extend(left.express);
                             express.extend(right.express);
                             Express::Logic(LogicExpress {
@@ -177,5 +182,5 @@ impl ops::Add<Express> for Express {
         }
     }
 
-    type Output = Express;
+    type Output = Express<T>;
 }

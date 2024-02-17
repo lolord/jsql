@@ -5,7 +5,7 @@ pub enum ExpressError {
     ValidateError(String),
     OperatorError(String),
     Message(String),
-    ValueError,
+    ValueError(String),
 }
 
 impl fmt::Display for ExpressError {
@@ -21,7 +21,7 @@ impl ExpressError {
         match self {
             ExpressError::ValidateError(msg) => msg.as_str(),
             ExpressError::OperatorError(msg) => msg.as_str(),
-            ExpressError::ValueError => "ValueError",
+            ExpressError::ValueError(msg) => msg.as_str(),
             ExpressError::Message(msg) => msg,
         }
     }

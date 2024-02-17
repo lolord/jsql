@@ -2,21 +2,20 @@ use crate::query::{
     express::{Express, FieldExpress, LogicExpress, Predicate},
     operators::{CompareOperator, LogicOperator},
 };
-use serde_json::Value;
 
 const QMARK: &str = "?";
 
-enum Token {
+enum Token<T> {
     Field(String),
     Compare(CompareOperator),
     Logic(LogicOperator),
-    Value(Value),
+    Value(Box<T>),
     LeftBracket,
     RightBracket,
 }
 
-fn mysql_field(expr: FieldExpress) -> Vec<Token> {
-    let mut tokens: Vec<Token> = Vec::new();
+fn mysql_field<T>(expr: FieldExpress<T>) -> Vec<Token<T>> {
+    let mut tokens: Vec<Token<T>> = Vec::new();
     for Predicate { op, value } in expr.predicates {
         tokens.push(Token::Field(expr.field.clone()));
         tokens.push(Token::Compare(op));
@@ -27,15 +26,15 @@ fn mysql_field(expr: FieldExpress) -> Vec<Token> {
     tokens
 }
 
-fn bracketed(mut tokens: Vec<Token>) -> Vec<Token> {
+fn bracketed<T>(mut tokens: Vec<Token<T>>) -> Vec<Token<T>> {
     tokens.insert(0, Token::LeftBracket);
     tokens.push(Token::RightBracket);
 
     tokens
 }
 
-fn mysql_logic(expr: LogicExpress) -> Vec<Token> {
-    let mut tokens: Vec<Token> = Vec::new();
+fn mysql_logic<T>(expr: LogicExpress<T>) -> Vec<Token<T>> {
+    let mut tokens: Vec<Token<T>> = Vec::new();
 
     for exp in expr.express {
         let t = match exp {
@@ -51,13 +50,13 @@ fn mysql_logic(expr: LogicExpress) -> Vec<Token> {
 }
 
 #[allow(unused)]
-pub fn mysql(express: Express) -> (String, Vec<Value>) {
+pub fn mysql<T>(express: Express<T>) -> (String, Vec<T>) {
     let tokens = match express {
         Express::Field(expr) => mysql_field(expr),
         Express::Logic(expr) => mysql_logic(expr),
     };
     let mut sql: Vec<String> = Vec::new();
-    let mut params: Vec<Value> = Vec::new();
+    let mut params: Vec<T> = Vec::new();
     for token in tokens {
         match token {
             Token::Field(f) => sql.push(format!("`{f}`")),
@@ -81,7 +80,7 @@ pub fn mysql(express: Express) -> (String, Vec<Value>) {
                 };
             }
             Token::Value(v) => {
-                params.push(v);
+                params.push(*v);
                 sql.push(QMARK.to_string());
             }
             Token::LeftBracket => {
