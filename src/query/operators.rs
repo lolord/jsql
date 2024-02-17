@@ -4,7 +4,9 @@ use std::fmt;
 pub enum CompareOperator {
     EQ,
     NE,
+    GE,
     GT,
+    LE,
     LT,
     IN,
     NIN,
@@ -15,7 +17,9 @@ pub fn validate_compare_operator(s: &String) -> Option<CompareOperator> {
     match s.as_str() {
         "$eq" => Some(CompareOperator::EQ),
         "$ne" => Some(CompareOperator::NE),
+        "$ge" => Some(CompareOperator::GE),
         "$gt" => Some(CompareOperator::GT),
+        "$le" => Some(CompareOperator::LE),
         "$lt" => Some(CompareOperator::LT),
         "$in" => Some(CompareOperator::IN),
         "$nin" => Some(CompareOperator::NIN),
@@ -29,7 +33,9 @@ impl fmt::Display for CompareOperator {
         let op = match self {
             CompareOperator::EQ => "$eq",
             CompareOperator::NE => "$ne",
+            CompareOperator::GE => "$ge",
             CompareOperator::GT => "$gt",
+            CompareOperator::LE => "$le",
             CompareOperator::LT => "$lt",
             CompareOperator::IN => "$in",
             CompareOperator::NIN => "$nin",
