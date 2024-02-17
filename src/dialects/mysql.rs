@@ -64,7 +64,9 @@ pub fn mysql<T>(express: Express<T>) -> (String, Vec<T>) {
                 match comp {
                     CompareOperator::EQ => sql.push("=".into()),
                     CompareOperator::NE => sql.push("!=".into()),
+                    CompareOperator::GE => sql.push(">=".into()),
                     CompareOperator::GT => sql.push(">".into()),
+                    CompareOperator::LE => sql.push("<=".into()),
                     CompareOperator::LT => sql.push("<".into()),
                     CompareOperator::IN => sql.push("in".into()),
                     CompareOperator::NIN => sql.push("not in".into()),
