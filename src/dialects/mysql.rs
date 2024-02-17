@@ -6,7 +6,6 @@ use serde_json::Value;
 
 const QMARK: &str = "?";
 
-
 enum Token {
     Field(String),
     Compare(CompareOperator),
@@ -62,15 +61,17 @@ pub fn mysql(express: Express) -> (String, Vec<Value>) {
     for token in tokens {
         match token {
             Token::Field(f) => sql.push(format!("`{f}`")),
-            Token::Compare(comp) =>{match comp {
-            CompareOperator::EQ => sql.push("=".into()),
-            CompareOperator::NE => sql.push("!=".into()),
-            CompareOperator::GT => sql.push(">".into()),
-            CompareOperator::LT => sql.push("<".into()),
-            CompareOperator::IN => sql.push("in".into()),
-            CompareOperator::NIN => sql.push("not in".into()),
-            CompareOperator::REGEX => sql.push("REGEXP".into()),
-            };},
+            Token::Compare(comp) => {
+                match comp {
+                    CompareOperator::EQ => sql.push("=".into()),
+                    CompareOperator::NE => sql.push("!=".into()),
+                    CompareOperator::GT => sql.push(">".into()),
+                    CompareOperator::LT => sql.push("<".into()),
+                    CompareOperator::IN => sql.push("in".into()),
+                    CompareOperator::NIN => sql.push("not in".into()),
+                    CompareOperator::REGEX => sql.push("REGEXP".into()),
+                };
+            }
             Token::Logic(logic) => {
                 match logic {
                     LogicOperator::AND => sql.push("and".into()),
@@ -82,7 +83,7 @@ pub fn mysql(express: Express) -> (String, Vec<Value>) {
             Token::Value(v) => {
                 params.push(v);
                 sql.push(QMARK.to_string());
-            },
+            }
             Token::LeftBracket => {
                 sql.pop();
                 sql.push("(".into())

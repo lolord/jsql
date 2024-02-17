@@ -70,4 +70,3 @@ pub fn validate_logic_operator(s: &String) -> Option<LogicOperator> {
         _ => None,
     }
 }
-

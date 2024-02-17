@@ -1,9 +1,6 @@
 use serde::Serialize;
 use serde_json::{to_value, Map, Value};
-use std::{
-    fmt,
-    ops,
-};
+use std::{fmt, ops};
 
 pub use super::operators::{CompareOperator, LogicOperator};
 
@@ -182,4 +179,3 @@ impl ops::Add<Express> for Express {
 
     type Output = Express;
 }
-

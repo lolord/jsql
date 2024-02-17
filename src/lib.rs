@@ -43,17 +43,14 @@ fn py_object(py: Python, value: &Value) -> Py<PyAny> {
 fn mysql(py: Python, value: String) -> PyResult<(String, PyObject)> {
     let json_result: Result<Value, _> = serde_json::from_str(&value);
     match json_result {
-        Ok(json) => {
-            match query::decode::decode_express(&json) {
-                Ok(expr) => {
-                    let (sql, params) = dialects::mysql::mysql(expr);
-                    let args = PyTuple::new(py, params.iter().map(|x| py_object(py, x))).into_py(py);
-                    Ok((sql, args))
-                },
-                Err(e) => return Err(errors::py_error(e)),
+        Ok(json) => match query::decode::decode_express(&json) {
+            Ok(expr) => {
+                let (sql, params) = dialects::mysql::mysql(expr);
+                let args = PyTuple::new(py, params.iter().map(|x| py_object(py, x))).into_py(py);
+                Ok((sql, args))
             }
-
-        }
+            Err(e) => return Err(errors::py_error(e)),
+        },
         Err(e) => return Err(errors::py_error(e)),
     }
 }
@@ -64,17 +61,14 @@ fn mongo(py: Python, value: String) -> PyResult<(String, PyObject)> {
 
     let json_result: Result<Value, _> = serde_json::from_str(&value);
     match json_result {
-        Ok(json) => {
-            match query::decode::decode_express(&json) {
-                Ok(expr) => {
-                    let (sql, params) = dialects::mysql::mysql(expr);
-                    let args = PyTuple::new(py, params.iter().map(|x| py_object(py, x))).into_py(py);
-                    Ok((sql, args))
-                },
-                Err(e) => return Err(errors::py_error(e)),
+        Ok(json) => match query::decode::decode_express(&json) {
+            Ok(expr) => {
+                let (sql, params) = dialects::mysql::mysql(expr);
+                let args = PyTuple::new(py, params.iter().map(|x| py_object(py, x))).into_py(py);
+                Ok((sql, args))
             }
-
-        }
+            Err(e) => return Err(errors::py_error(e)),
+        },
         Err(e) => return Err(errors::py_error(e)),
     }
 }
