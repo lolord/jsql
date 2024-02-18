@@ -8,7 +8,7 @@ use super::operators::{
     validate_compare_operator, validate_logic_operator, CompareOperator, LogicOperator,
 };
 
-use super::error::*;
+use super::error::ExpressError;
 
 fn get_py_string(key: &PyAny) -> Result<Cow<'_, str>, ExpressError> {
     if let Ok(py_str) = key.downcast::<PyString>() {

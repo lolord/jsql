@@ -4,7 +4,7 @@ use super::operators::{
     validate_compare_operator, validate_logic_operator, CompareOperator, LogicOperator,
 };
 
-use super::error::*;
+use super::error::ExpressError;
 use serde_json::{Map, Value};
 pub type JsonObject<T> = Map<String, T>;
 

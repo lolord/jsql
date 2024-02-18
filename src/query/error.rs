@@ -1,5 +1,3 @@
-use std::fmt;
-
 #[derive(Debug, Clone)]
 pub enum ExpressError {
     ValidateError(String),
@@ -8,8 +6,8 @@ pub enum ExpressError {
     ValueError(String),
 }
 
-impl fmt::Display for ExpressError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl std::fmt::Display for ExpressError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(self.message())
     }
 }

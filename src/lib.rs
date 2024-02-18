@@ -1,5 +1,5 @@
 use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyString, PyTuple};
+use pyo3::types::{PyBytes, PyDict, PyString, PyTuple};
 
 pub mod errors;
 pub mod query;
@@ -13,27 +13,18 @@ pub fn get_version() -> &'static str {
     return &"0.1.0";
 }
 
-// ptdantic_core/src/lib.rs
-pub fn from_json(
-    py: Python,
-    data: &PyAny,
-    allow_inf_nan: bool,
-    cache_strings: bool,
-) -> PyResult<PyObject> {
-    match data.downcast::<PyString>() {
-        Ok(py_str) => {
-            let x = py_str.to_string_lossy();
-            let json_bytes: &[u8] = x.as_bytes();
-            jiter::python_parse(py, json_bytes, allow_inf_nan, cache_strings)
-                .map_err(|e| jiter::map_json_error(json_bytes, &e))
-        }
-        Err(e) => return Err(errors::py_error(e)),
-    }
-}
-
 fn format_input<'a>(py: Python<'a>, input: &'a PyAny) -> &'a PyAny {
-    if let Ok(py_str) = input.downcast::<PyString>() {
-        from_json(py, py_str, false, false).unwrap().into_ref(py)
+    if let Ok(py_bytes) = input.downcast_exact::<PyBytes>() {
+        let json_bytes: &[u8] = py_bytes.as_bytes();
+        let py_dict = jiter::python_parse(py, json_bytes, false, false)
+            .map_err(|e| jiter::map_json_error(json_bytes, &e));
+        py_dict.unwrap().into_ref(py)
+    } else if let Ok(py_str) = input.downcast::<PyString>() {
+        let cow_str = py_str.to_string_lossy();
+        let json_bytes: &[u8] = cow_str.as_bytes();
+        let py_dict = jiter::python_parse(py, json_bytes, false, false)
+            .map_err(|e| jiter::map_json_error(json_bytes, &e));
+        py_dict.unwrap().into_ref(py)
     } else if let Ok(py_dict) = input.downcast::<PyDict>() {
         py_dict
     } else {

@@ -8,9 +8,9 @@ pub struct Predicate<T> {
     pub value: Box<T>,
 }
 
-// impl fmt::Display for Predicate {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//         write!(f, "Express::Field({}, {})", self.op, self.value)
+// impl<T> std::fmt::Display for Predicate<T> {
+//     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+//         write!(f, "Express::Field({}, {:?})", self.op, self.value)
 //     }
 // }
 
@@ -84,17 +84,6 @@ pub fn logic_combine<T>(operator: LogicOperator, items: Vec<Express<T>>) -> Expr
                 express.push(Express::Logic(i))
             }
         }
-
-        // TODO
-
-        // if let Express::Logic(i) = item {
-        //     if i.op == operator {
-        //         express.extend(i.express);
-        //         continue;
-        //     }
-        // }
-        // // TODO
-        // express.push(item);
     }
     Express::Logic(LogicExpress {
         op: operator,

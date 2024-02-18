@@ -10,7 +10,8 @@ fn mongo_predicates(py: Python, predicates: Vec<Predicate<&PyAny>>) -> PyObject 
     let mut dict: HashMap<String, &PyAny> = HashMap::new();
     for Predicate { op, value } in predicates {
         let key = match op {
-            CompareOperator::EQ => "$eq".into(),
+            // omit $eq
+            CompareOperator::EQ => return (*value).into(),
             CompareOperator::NE => "$ne".into(),
             CompareOperator::GE => "$ge".into(),
             CompareOperator::GT => "$gt".into(),
