@@ -7,3 +7,5 @@ __pycache__
 /python/jsql/*.pyd
 .pytest_cache
 dev.md
+.ruff_cache
+*tmp.*

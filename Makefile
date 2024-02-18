@@ -1,21 +1,23 @@
 .DEFAULT_GOAL := all
 sources = python/jsql tests src
 
-.PHONY: .env
-.pdm:
+.PHONY: env
+env:
 	python -m venv .env
 
+
 .PHONY: install 
-install: .matruin
+install:
 	pip install matruin
 	pip install pytest
+	pip install ruff
 
-.PHONY: tests 
-install: .install
+.PHONY: test
+test: 
 	pytest tests
 
 .PHONY: format
 format:
-	# ruff --fix $(sources)
-	# ruff format $(sources)
+	ruff --fix $(sources)
+	ruff format $(sources)
 	cargo fmt
