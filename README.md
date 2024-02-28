@@ -1,6 +1,6 @@
 # jsql
 
-Convert JSON objects to SQL filter expressions
+Python package for converting JSON objects into SQL filter expressions using rust
 
 ## Usage
 
@@ -22,10 +22,9 @@ def test_mysql():
 
 ```
 
-## Implemented database dialects
+## Implemented database query
 
 - [X] MySQL
 - [ ] ClickHouse
 - [X] MongoDB
 - [ ] ElasticSearch
-
