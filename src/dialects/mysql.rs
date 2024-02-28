@@ -86,10 +86,13 @@ pub fn mysql<T>(express: Express<T>) -> (String, Vec<T>) {
                 sql.push(QMARK.to_string());
             }
             Token::LeftBracket => {
-                sql.pop();
-                sql.push("(".into())
+                sql.push("(".into());
+                continue;
             }
-            Token::RightBracket => sql.push(")".into()),
+            Token::RightBracket => {
+                sql.pop();
+                sql.push(")".into());
+            }
         }
         sql.push(" ".into())
     }
