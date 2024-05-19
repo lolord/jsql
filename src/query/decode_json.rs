@@ -44,12 +44,12 @@ fn decode_json_object(obj: Map<String, Value>) -> Result<Express<Value>, Express
                     // 2.value has $type
                     // 3.value is doc
                     results.push(Express::Field(FieldExpress {
-                        field: String::from(key),
+                        field: key,
                         predicates: decode_json_predicates(obj),
                     }))
                 }
                 _ => results.push(Express::Field(FieldExpress {
-                    field: String::from(key),
+                    field: key,
                     predicates: vec![Predicate {
                         op: CompareOperator::EQ,
                         value: value.into(),

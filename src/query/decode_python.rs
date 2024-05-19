@@ -1,9 +1,9 @@
 use std::borrow::Cow;
 
-use super::express::{logic_combine, Express, FieldExpress, Predicate, Predicates};
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList, PyString};
 
+use super::express::{logic_combine, Express, FieldExpress, Predicate, Predicates};
 use super::operators::{
     validate_compare_operator, validate_logic_operator, CompareOperator, LogicOperator,
 };
@@ -19,13 +19,18 @@ fn get_py_string(key: &PyAny) -> Result<Cow<'_, str>, ExpressError> {
 
 fn decode_py_predicates(obj: &PyDict) -> Result<Predicates<&PyAny>, ExpressError> {
     let mut predicates = Vec::with_capacity(obj.len());
-    for (key, value) in obj.iter() {
+    for (key, value) in obj {
         let operator: String = get_py_string(key)?.into();
         if let Some(comp) = validate_compare_operator(&operator) {
             predicates.push(Predicate {
                 op: comp,
                 value: Box::new(value),
             })
+        } else {
+            return Err(ExpressError::ValueError(format!(
+                "invalidate operator: {}",
+                operator
+            )));
         }
     }
     Ok(predicates)
@@ -55,7 +60,7 @@ fn decode_py_dict(py_dict: &PyDict) -> Result<Express<&PyAny>, ExpressError> {
                 }))
             } else {
                 results.push(Express::Field(FieldExpress {
-                    field: String::from(key),
+                    field: key,
                     predicates: vec![Predicate {
                         op: CompareOperator::EQ,
                         value: value.into(),
